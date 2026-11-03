@@ -1,0 +1,28 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Large datasets & raw data downloads
+data/raw/
+data/chunks/
+data/binary/*.bin
+data/binary/*.parquet
+
+# Model checkpoints & weights (uncomment if using Git LFS)
+*.pt
+
+# Virtual environments
+venv/
+.venv/
+env/
+ENV/
+
+# Streamlit runtime & local logs
+.streamlit/
+*.log
+
+# Operating System files
+.DS_Store
+Thumbs.db
+desktop.ini
