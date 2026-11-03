@@ -11,10 +11,11 @@ Implements local training on NVIDIA Quadro T1000 (4 GB VRAM) featuring:
 import argparse
 import math
 import os
+import shutil
 import sys
 import time
 from pathlib import Path
-from typing import Optional, Tuple
+from typing import Optional, Tuple, Union
 
 import numpy as np
 import torch
@@ -115,6 +116,8 @@ def train_mose(
     checkpoint_out: Optional[str] = None,
     override_max_steps: Optional[int] = None,
     generate_dummy: bool = False,
+    resume: Optional[Union[str, bool]] = None,
+    start_step_override: Optional[int] = None,
 ):
     """Executes the full local training loop with mixed precision and memmap loading."""
     cfg = config or Config()
@@ -180,11 +183,90 @@ def train_mose(
     max_steps = override_max_steps or cfg.max_steps
     eval_interval = 200
     best_val_loss = float("inf")
+    start_step = 0
+
+    # 4. Checkpoint Resumption
+    if resume:
+        if isinstance(resume, str):
+            resume_target = resume
+        else:
+            resume_target = checkpoint_out or cfg.checkpoint_path
+
+        chk_path = Path(resume_target)
+        if not chk_path.exists():
+            chk_path = cfg.get_path(resume_target)
+        if not chk_path.exists():
+            # Check data/ directory fallback
+            data_fallback = cfg.get_path("data") / Path(resume_target).name
+            if data_fallback.exists():
+                chk_path = data_fallback
+
+        if chk_path.exists():
+            # Create safety backup of existing step 3400 checkpoint before training begins
+            backup_path = chk_path.parent / "mose_python_model_step3400.pt"
+            if not backup_path.exists():
+                try:
+                    shutil.copy2(chk_path, backup_path)
+                    print(f"Created safety backup: {backup_path.name}")
+                except Exception as bkp_err:
+                    print(f"Notice: Could not create backup ({bkp_err})")
+
+            print(f"Loading checkpoint weights from {chk_path}...")
+            try:
+                checkpoint = torch.load(str(chk_path), map_location=device, weights_only=False)
+            except TypeError:
+                checkpoint = torch.load(str(chk_path), map_location=device)
+
+            if isinstance(checkpoint, dict) and "model_state_dict" in checkpoint:
+                model.load_state_dict(checkpoint["model_state_dict"])
+                if "step" in checkpoint:
+                    start_step = int(checkpoint["step"])
+                if "best_val_loss" in checkpoint:
+                    best_val_loss = float(checkpoint["best_val_loss"])
+                elif "val_loss" in checkpoint:
+                    best_val_loss = float(checkpoint["val_loss"])
+
+                if "optimizer_state_dict" in checkpoint and checkpoint["optimizer_state_dict"] is not None:
+                    try:
+                        optimizer.load_state_dict(checkpoint["optimizer_state_dict"])
+                        for state in optimizer.state.values():
+                            for k, v in state.items():
+                                if isinstance(v, torch.Tensor):
+                                    state[k] = v.to(device)
+                        print("Restored optimizer state from checkpoint.")
+                    except Exception as e:
+                        print(f"Notice: Could not restore optimizer state ({e}). Re-initializing optimizer.")
+
+                if "scaler_state_dict" in checkpoint and checkpoint["scaler_state_dict"] is not None:
+                    try:
+                        scaler.load_state_dict(checkpoint["scaler_state_dict"])
+                        print("Restored GradScaler state from checkpoint.")
+                    except Exception as e:
+                        print(f"Notice: Could not restore GradScaler state ({e}).")
+            elif isinstance(checkpoint, dict):
+                model.load_state_dict(checkpoint)
+                print("Loaded raw model state dictionary from checkpoint.")
+
+            if start_step_override is not None:
+                start_step = start_step_override
+            elif start_step == 0:
+                start_step = 3400
+
+            if best_val_loss == float("inf"):
+                best_val_loss = 4.3488
+
+            print(
+                f"Resuming from checkpoint: {chk_path.name} "
+                f"(Starting at Step {start_step} | Best Val Loss: {best_val_loss:.4f})"
+            )
+        else:
+            print(f"Notice: Checkpoint file '{resume_target}' not found. Starting training from scratch (Step 0).")
 
     print("\nStarting training loop...")
     start_time = time.time()
-    tokens_seen = 0
-    step = 0
+    effective_batch_tokens = cfg.batch_size * cfg.gradient_accumulation_steps * cfg.seq_len
+    tokens_seen = start_step * effective_batch_tokens
+    step = start_step
 
     model.train()
     optimizer.zero_grad(set_to_none=True)
@@ -229,7 +311,7 @@ def train_mose(
         tokens_per_sec = (cfg.batch_size * cfg.gradient_accumulation_steps * cfg.seq_len) / max(step_time, 1e-4)
 
         # Console logging
-        if step % 20 == 0 or step == max_steps - 1:
+        if step % 20 == 0 or step == max_steps - 1 or step == start_step:
             vram_info = ""
             if "cuda" in device:
                 vram_used = torch.cuda.max_memory_allocated() / (1024**2)
@@ -244,7 +326,7 @@ def train_mose(
             )
 
         # Periodic Validation & Checkpointing
-        if (step > 0 and step % eval_interval == 0) or (step == max_steps - 1):
+        if (step > start_step and step % eval_interval == 0) or (step == max_steps - 1):
             val_task_loss, val_aux_loss = estimate_val_loss(
                 model, val_dataset, cfg.batch_size, eval_iters=25, device=device, use_fp16=cfg.use_fp16
             )
@@ -259,13 +341,25 @@ def train_mose(
             if val_task_loss < best_val_loss:
                 best_val_loss = val_task_loss
                 print(f"--> Lowest validation loss achieved ({best_val_loss:.4f}). Saving checkpoint to {save_path.name}...")
+                
+                # Ensure safety backup exists before overwriting
+                backup_file = save_path.parent / "mose_python_model_step3400.pt"
+                if save_path.exists() and not backup_file.exists():
+                    try:
+                        shutil.copy2(save_path, backup_file)
+                        print(f"Created safety backup: {backup_file.name}")
+                    except Exception:
+                        pass
+
                 torch.save(
                     {
-                        "model_state_dict": model.state_dict(),
-                        "config_dict": {k: getattr(cfg, k) for k in dir(cfg) if not k.startswith("_") and not callable(getattr(cfg, k))},
                         "step": step,
-                        "val_loss": val_task_loss,
+                        "model_state_dict": model.state_dict(),
                         "optimizer_state_dict": optimizer.state_dict(),
+                        "scaler_state_dict": scaler.state_dict(),
+                        "best_val_loss": best_val_loss,
+                        "val_loss": val_task_loss,
+                        "config_dict": {k: getattr(cfg, k) for k in dir(cfg) if not k.startswith("_") and not callable(getattr(cfg, k))},
                     },
                     str(save_path),
                 )
@@ -287,10 +381,18 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Local training script for MoSE on Quadro T1000.")
     parser.add_argument("--batch_size", type=int, default=16, help="Micro-batch size")
     parser.add_argument("--lr", type=float, default=5e-4, help="Learning rate")
-    parser.add_argument("--max_steps", type=int, default=5000, help="Maximum training steps")
+    parser.add_argument("--max_steps", type=int, default=15000, help="Maximum training steps")
     parser.add_argument("--checkpoint", type=str, default="mose_python_model.pt", help="Checkpoint filename")
     parser.add_argument("--device", type=str, default=None, help="Hardware device (cuda/cpu)")
     parser.add_argument("--dummy_data", action="store_true", help="Generate synthetic dummy memmap data for test run")
+    parser.add_argument(
+        "--resume",
+        nargs="?",
+        const="mose_python_model.pt",
+        default=None,
+        help="Resume training from existing checkpoint (default: mose_python_model.pt)",
+    )
+    parser.add_argument("--start_step", type=int, default=None, help="Override starting step (default from checkpoint or 3400)")
 
     args = parser.parse_args()
     cfg = Config()
@@ -301,9 +403,17 @@ if __name__ == "__main__":
     if args.device:
         cfg.device = args.device
 
+    # Resolve resume target if specified
+    resume_arg = args.resume
+    if resume_arg is not None:
+        if resume_arg == "mose_python_model.pt" and args.checkpoint != "mose_python_model.pt":
+            resume_arg = args.checkpoint
+
     train_mose(
         cfg,
         checkpoint_out=args.checkpoint,
         override_max_steps=args.max_steps,
         generate_dummy=args.dummy_data,
+        resume=resume_arg,
+        start_step_override=args.start_step,
     )
