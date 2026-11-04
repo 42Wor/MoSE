@@ -77,14 +77,14 @@ def build_pdf(output_pdf_path: Path):
     """Generates publication-quality PDF."""
     output_pdf_path.parent.mkdir(parents=True, exist_ok=True)
 
-    # Margins: 45pt left/right, 48pt top/bottom
+    # Margins: 42pt left/right, 42pt top/bottom
     doc = SimpleDocTemplate(
         str(output_pdf_path),
         pagesize=letter,
-        leftMargin=48,
-        rightMargin=48,
-        topMargin=48,
-        bottomMargin=48,
+        leftMargin=42,
+        rightMargin=42,
+        topMargin=42,
+        bottomMargin=42,
     )
 
     styles = getSampleStyleSheet()
@@ -94,19 +94,19 @@ def build_pdf(output_pdf_path: Path):
         "DocTitle",
         parent=styles["Normal"],
         fontName="Times-Bold",
-        fontSize=17,
-        leading=21,
+        fontSize=16.5,
+        leading=20.5,
         alignment=TA_CENTER,
         textColor=colors.HexColor("#111111"),
-        spaceAfter=10,
+        spaceAfter=8,
     )
 
     author_style = ParagraphStyle(
         "DocAuthor",
         parent=styles["Normal"],
         fontName="Times-Roman",
-        fontSize=10.5,
-        leading=14,
+        fontSize=10.0,
+        leading=13.5,
         alignment=TA_CENTER,
         textColor=colors.HexColor("#212121"),
     )
@@ -115,22 +115,22 @@ def build_pdf(output_pdf_path: Path):
         "DocEmail",
         parent=styles["Normal"],
         fontName="Courier",
-        fontSize=9.0,
-        leading=12,
+        fontSize=8.5,
+        leading=11.5,
         alignment=TA_CENTER,
         textColor=colors.HexColor("#0d47a1"),
-        spaceAfter=14,
+        spaceAfter=10,
     )
 
     abstract_style = ParagraphStyle(
         "AbstractBody",
         parent=styles["Normal"],
         fontName="Times-Roman",
-        fontSize=8.8,
-        leading=12.2,
+        fontSize=8.6,
+        leading=11.8,
         alignment=TA_JUSTIFY,
-        leftIndent=24,
-        rightIndent=24,
+        leftIndent=20,
+        rightIndent=20,
         textColor=colors.HexColor("#1a1a1a"),
     )
 
@@ -138,12 +138,12 @@ def build_pdf(output_pdf_path: Path):
         "AcademicH1",
         parent=styles["Normal"],
         fontName="Times-Bold",
-        fontSize=11.0,
-        leading=15,
+        fontSize=10.5,
+        leading=14,
         alignment=TA_LEFT,
         textColor=colors.HexColor("#000000"),
-        spaceBefore=14,
-        spaceAfter=6,
+        spaceBefore=10,
+        spaceAfter=4,
         keepWithNext=True,
     )
 
@@ -151,12 +151,12 @@ def build_pdf(output_pdf_path: Path):
         "AcademicH2",
         parent=styles["Normal"],
         fontName="Times-BoldItalic",
-        fontSize=9.8,
-        leading=13.5,
+        fontSize=9.5,
+        leading=13.0,
         alignment=TA_LEFT,
         textColor=colors.HexColor("#1a237e"),
-        spaceBefore=10,
-        spaceAfter=4,
+        spaceBefore=8,
+        spaceAfter=3,
         keepWithNext=True,
     )
 
@@ -164,56 +164,56 @@ def build_pdf(output_pdf_path: Path):
         "AcademicBody",
         parent=styles["Normal"],
         fontName="Times-Roman",
-        fontSize=9.2,
-        leading=12.8,
+        fontSize=9.0,
+        leading=12.2,
         alignment=TA_JUSTIFY,
         textColor=colors.HexColor("#212121"),
-        spaceAfter=6,
+        spaceAfter=5,
     )
 
     eq_style = ParagraphStyle(
         "EquationStyle",
         parent=styles["Normal"],
         fontName="Times-Italic",
-        fontSize=9.2,
-        leading=13,
+        fontSize=9.0,
+        leading=12.5,
         alignment=TA_CENTER,
         textColor=colors.HexColor("#111111"),
-        spaceBefore=4,
-        spaceAfter=6,
+        spaceBefore=3,
+        spaceAfter=5,
     )
 
     code_block_style = ParagraphStyle(
         "CodeBlock",
         parent=styles["Normal"],
         fontName="Courier",
-        fontSize=8.2,
-        leading=11,
+        fontSize=8.0,
+        leading=10.5,
         alignment=TA_LEFT,
         textColor=colors.HexColor("#263238"),
-        leftIndent=15,
-        spaceBefore=4,
-        spaceAfter=6,
+        leftIndent=12,
+        spaceBefore=3,
+        spaceAfter=5,
     )
 
     caption_style = ParagraphStyle(
         "FigCaption",
         parent=styles["Normal"],
         fontName="Times-Italic",
-        fontSize=8.3,
-        leading=11.5,
+        fontSize=8.2,
+        leading=11.2,
         alignment=TA_CENTER,
         textColor=colors.HexColor("#37474f"),
-        spaceBefore=4,
-        spaceAfter=10,
+        spaceBefore=3,
+        spaceAfter=8,
     )
 
     table_header_style = ParagraphStyle(
         "TableHeader",
         parent=styles["Normal"],
         fontName="Times-Bold",
-        fontSize=8.2,
-        leading=10.5,
+        fontSize=8.0,
+        leading=10.0,
         alignment=TA_CENTER,
         textColor=colors.HexColor("#ffffff"),
     )
@@ -222,8 +222,8 @@ def build_pdf(output_pdf_path: Path):
         "TableCell",
         parent=styles["Normal"],
         fontName="Times-Roman",
-        fontSize=8.0,
-        leading=10.2,
+        fontSize=7.8,
+        leading=9.8,
         alignment=TA_CENTER,
         textColor=colors.HexColor("#212121"),
     )
@@ -232,8 +232,8 @@ def build_pdf(output_pdf_path: Path):
         "TableCellLeft",
         parent=styles["Normal"],
         fontName="Times-Roman",
-        fontSize=8.0,
-        leading=10.2,
+        fontSize=7.8,
+        leading=9.8,
         alignment=TA_LEFT,
         textColor=colors.HexColor("#212121"),
     )
@@ -242,8 +242,8 @@ def build_pdf(output_pdf_path: Path):
         "TableCellBold",
         parent=styles["Normal"],
         fontName="Times-Bold",
-        fontSize=8.0,
-        leading=10.2,
+        fontSize=7.8,
+        leading=9.8,
         alignment=TA_CENTER,
         textColor=colors.HexColor("#0d47a1"),
     )
@@ -252,13 +252,13 @@ def build_pdf(output_pdf_path: Path):
         "RefStyle",
         parent=styles["Normal"],
         fontName="Times-Roman",
-        fontSize=8.2,
-        leading=11.2,
+        fontSize=8.0,
+        leading=10.8,
         alignment=TA_LEFT,
-        leftIndent=18,
-        firstLineIndent=-18,
+        leftIndent=16,
+        firstLineIndent=-16,
         textColor=colors.HexColor("#212121"),
-        spaceAfter=3,
+        spaceAfter=2.5,
     )
 
     story = []
@@ -364,6 +364,18 @@ def build_pdf(output_pdf_path: Path):
     story.append(Paragraph("<i>E<sub>i</sub></i>(<i>x</i>) = <i>W</i><sub><i>i</i>,2</sub> &phi;(<i>W</i><sub><i>i</i>,1</sub> <i>x</i> + <i>b</i><sub><i>i</i>,1</sub>) + <i>b</i><sub><i>i</i>,2</sub> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; (1)", eq_style))
     story.append(Paragraph("where <i>W</i><sub><i>i</i>,1</sub> &isin; &real;<sup>128 &times; 192</sup>, <i>W</i><sub><i>i</i>,2</sub> &isin; &real;<sup>192 &times; 128</sup>, and &phi; denotes GELU activation.", body_style))
 
+    # In-text callout and Figure 1 insertion (per checklist: directly after III-A)
+    story.append(Paragraph(
+        "As illustrated in Fig. 1, the persistent shared expert acts in parallel with the routed micro-expert pathways to provide a shared semantic anchor across all tokens.",
+        body_style,
+    ))
+    fig1_path = Path("paper_figures/fig1_architecture.png")
+    if fig1_path.exists():
+        story.append(Spacer(1, 2))
+        story.append(Image(str(fig1_path), width=460, height=265))
+        story.append(Paragraph("<b>Fig. 1.</b> Architectural diagram of a single MoSE block. An input token representation <i>x<sub>t</sub></i> is processed concurrently by the unrouted persistent shared expert (<i>d</i><sub>shared</sub> = 128) and a learned gating network selecting the Top-2 of 16 micro-experts (<i>d</i><sub>expert</sub> = 128).", caption_style))
+        story.append(Spacer(1, 3))
+
     story.append(Paragraph(
         "<b>B. Top-2 Gating Router:</b> A linear projection gate computes routing logits <i>z<sub>t</sub></i> = <i>W<sub>g</sub></i> <i>x<sub>t</sub></i>, "
         "with probabilities <i>p</i><sub><i>t</i>,<i>i</i></sub> = exp(<i>z</i><sub><i>t</i>,<i>i</i></sub>) / &Sigma; exp(<i>z</i><sub><i>t</i>,<i>j</i></sub>). "
@@ -386,13 +398,6 @@ def build_pdf(output_pdf_path: Path):
     ))
     story.append(Paragraph("<i>L</i><sub>aux</sub> = &alpha; <i>N</i> &Sigma;<sub><i>i</i></sub> <i>f<sub>i</sub></i> <i>P<sub>i</sub></i> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; (5)", eq_style))
     story.append(Paragraph("where <i>f<sub>i</sub></i> is the dispatch fraction and <i>P<sub>i</sub></i> is the mean gate probability allocated to expert <i>i</i> across the batch.", body_style))
-
-    # Insert Figure 1
-    fig1_path = Path("paper_figures/fig1_architecture.png")
-    if fig1_path.exists():
-        story.append(Spacer(1, 4))
-        story.append(Image(str(fig1_path), width=480, height=312))
-        story.append(Paragraph("<b>Fig. 1.</b> Architecture of a single MoSE block featuring the persistent shared expert in parallel with Top-2 gated micro-experts.", caption_style))
 
     # =========================================================================
     # Section IV: System Optimization & Hardware Benchmarks
@@ -419,12 +424,12 @@ def build_pdf(output_pdf_path: Path):
         ("ALIGN", (0, 0), (-1, -1), "LEFT"),
         ("GRID", (0, 0), (-1, -1), 0.5, colors.HexColor("#cfd8dc")),
         ("ROWBACKGROUNDS", (0, 1), (-1, -1), [colors.HexColor("#ffffff"), colors.HexColor("#f8f9fa")]),
-        ("TOPPADDING", (0, 0), (-1, -1), 3.5),
-        ("BOTTOMPADDING", (0, 0), (-1, -1), 3.5),
+        ("TOPPADDING", (0, 0), (-1, -1), 2.5),
+        ("BOTTOMPADDING", (0, 0), (-1, -1), 2.5),
     ]))
     story.append(Paragraph("<b>TABLE I: SYSTEM AND PARAMETER SPECIFICATION</b>", caption_style))
     story.append(t1)
-    story.append(Spacer(1, 8))
+    story.append(Spacer(1, 5))
 
     table2_data = [
         [Paragraph("<b>Metric</b>", table_header_style), Paragraph("<b>NVIDIA Quadro T1000 Laptop</b>", table_header_style), Paragraph("<b>NVIDIA L4 Cloud GPU</b>", table_header_style), Paragraph("<b>Performance Factor</b>", table_header_style)],
@@ -442,12 +447,12 @@ def build_pdf(output_pdf_path: Path):
         ("ALIGN", (0, 0), (-1, -1), "CENTER"),
         ("GRID", (0, 0), (-1, -1), 0.5, colors.HexColor("#cfd8dc")),
         ("ROWBACKGROUNDS", (0, 1), (-1, -1), [colors.HexColor("#ffffff"), colors.HexColor("#f8f9fa")]),
-        ("TOPPADDING", (0, 0), (-1, -1), 3.0),
-        ("BOTTOMPADDING", (0, 0), (-1, -1), 3.0),
+        ("TOPPADDING", (0, 0), (-1, -1), 2.2),
+        ("BOTTOMPADDING", (0, 0), (-1, -1), 2.2),
     ]))
     story.append(Paragraph("<b>TABLE II: DUAL-HARDWARE EXECUTION BENCHMARK</b>", caption_style))
     story.append(t2)
-    story.append(Spacer(1, 10))
+    story.append(Spacer(1, 6))
 
     # =========================================================================
     # Section V: Empirical Evaluation
@@ -456,9 +461,18 @@ def build_pdf(output_pdf_path: Path):
     story.append(Paragraph(
         "<b>A. Quantitative Convergence:</b> MoSE was trained across 15,000 optimization steps (245.76 million tokens) on an NVIDIA L4 GPU. "
         "The training loss initiated at 9.2278 (matching theoretical ln(10,000) &approx; 9.2103) and converged monotonically. "
-        "Validation loss reached its global nadir of <b>3.5775 (validation perplexity 35.78)</b> at Step 13,800.",
+        "Validation loss reached its global nadir of <b>3.5775 (validation perplexity 35.78)</b> at Step 13,800. "
+        "The convergence dynamics in Fig. 2(a) show a rapid perplexity reduction during linear warmup, while Fig. 2(b) confirms that the router auxiliary loss remains stable across the entire 245.8M-token training run.",
         body_style,
     ))
+
+    # Figure 2 placed directly above Table III per checklist
+    fig2_path = Path("paper_figures/fig2_convergence.png")
+    if fig2_path.exists():
+        story.append(Spacer(1, 2))
+        story.append(Image(str(fig2_path), width=480, height=155))
+        story.append(Paragraph("<b>Fig. 2.</b> Training and validation trajectory over 15,000 optimization steps on an NVIDIA L4 GPU. (a) Train and validation task loss with corresponding validation perplexity descent from 9,934 to 35.78; (b) Switch-style auxiliary load-balancing loss strictly bounded between 1.01 and 1.09, demonstrating stable routing without expert starvation.", caption_style))
+        story.append(Spacer(1, 3))
 
     # Table III
     table3_data = [
@@ -485,18 +499,12 @@ def build_pdf(output_pdf_path: Path):
         ("GRID", (0, 0), (-1, -1), 0.5, colors.HexColor("#cfd8dc")),
         ("ROWBACKGROUNDS", (0, 1), (-1, -1), [colors.HexColor("#ffffff"), colors.HexColor("#f8f9fa")]),
         ("BACKGROUND", (0, 13), (-1, 13), colors.HexColor("#e8f5e9")),
-        ("TOPPADDING", (0, 0), (-1, -1), 2.2),
-        ("BOTTOMPADDING", (0, 0), (-1, -1), 2.2),
+        ("TOPPADDING", (0, 0), (-1, -1), 1.8),
+        ("BOTTOMPADDING", (0, 0), (-1, -1), 1.8),
     ]))
     story.append(Paragraph("<b>TABLE III: COMPLETE QUANTITATIVE CONVERGENCE PROFILE (0 TO 15,000 STEPS)</b>", caption_style))
     story.append(t3)
-    story.append(Spacer(1, 8))
-
-    # Insert Figure 2
-    fig2_path = Path("paper_figures/fig2_convergence.png")
-    if fig2_path.exists():
-        story.append(Image(str(fig2_path), width=480, height=180))
-        story.append(Paragraph("<b>Fig. 2.</b> (a) Dual-axis convergence showing Training Loss vs. Validation Task Loss and Perplexity trajectory across 15,000 steps. (b) Switch-style router auxiliary load-balancing loss strictly bounded between 1.01 and 1.09.", caption_style))
+    story.append(Spacer(1, 5))
 
     # FIM Table IV
     story.append(Paragraph("<b>B. Qualitative Fill-in-the-Middle (FIM) Evolution:</b> Using the standard infilling probe `&lt;PRE&gt;def add(a, b):\n &lt;SUF&gt;\n return result&lt;MID&gt;`, the model's infilled completions progressed through distinct linguistic stages:", body_style))
@@ -515,18 +523,19 @@ def build_pdf(output_pdf_path: Path):
         ("ALIGN", (0, 0), (-1, -1), "LEFT"),
         ("GRID", (0, 0), (-1, -1), 0.5, colors.HexColor("#cfd8dc")),
         ("ROWBACKGROUNDS", (0, 1), (-1, -1), [colors.HexColor("#ffffff"), colors.HexColor("#f8f9fa")]),
-        ("TOPPADDING", (0, 0), (-1, -1), 2.5),
-        ("BOTTOMPADDING", (0, 0), (-1, -1), 2.5),
+        ("TOPPADDING", (0, 0), (-1, -1), 2.0),
+        ("BOTTOMPADDING", (0, 0), (-1, -1), 2.0),
     ]))
     story.append(Paragraph("<b>TABLE IV: QUALITATIVE FIM GENERATION TRAJECTORY</b>", caption_style))
     story.append(t4)
-    story.append(Spacer(1, 8))
+    story.append(Spacer(1, 5))
 
     # Specialization Table V
     story.append(Paragraph(
         "<b>C. Empirical Micro-Expert Specialization (Step 13,800):</b> Probing the checkpoint at Step 13,800 across Python syntax keywords "
         "revealed distinct modularization. While general control-flow statements (`return`, `try`, `assert`) exhibited balanced entropy (~75.0%), "
-        "distinct keywords concentrated heavily into specific micro-experts:",
+        "distinct keywords concentrated heavily into specific micro-experts. "
+        "The activation heatmap in Fig. 3 visually validates token-conditioned routing diversity: functional keywords concentrate on discrete micro-experts, while control-flow exits (<code>return</code>, <code>try</code>) utilize distributed generalist pathways.",
         body_style,
     ))
 
@@ -548,18 +557,19 @@ def build_pdf(output_pdf_path: Path):
         ("GRID", (0, 0), (-1, -1), 0.5, colors.HexColor("#cfd8dc")),
         ("ROWBACKGROUNDS", (0, 1), (-1, -1), [colors.HexColor("#ffffff"), colors.HexColor("#f8f9fa")]),
         ("BACKGROUND", (0, 1), (-1, 1), colors.HexColor("#f3e5f5")),
-        ("TOPPADDING", (0, 0), (-1, -1), 2.5),
-        ("BOTTOMPADDING", (0, 0), (-1, -1), 2.5),
+        ("TOPPADDING", (0, 0), (-1, -1), 2.0),
+        ("BOTTOMPADDING", (0, 0), (-1, -1), 2.0),
     ]))
     story.append(Paragraph("<b>TABLE V: EMPIRICAL EXPERT SPECIALIZATION MATRIX (STEP 13,800)</b>", caption_style))
     story.append(t5)
-    story.append(Spacer(1, 8))
+    story.append(Spacer(1, 5))
 
-    # Insert Figure 3
+    # Insert Figure 3 directly following Table V per checklist
     fig3_path = Path("paper_figures/fig3_routing_heatmap.png")
     if fig3_path.exists():
-        story.append(Image(str(fig3_path), width=480, height=220))
-        story.append(Paragraph("<b>Fig. 3.</b> Empirical micro-expert routing specialization heatmap across Python keywords at Step 13,800. Expert 3 displays dominant specialization on <code>lambda</code> (60.1% entropy), while <code>import</code> and <code>class</code> recruit modular secondary experts.", caption_style))
+        story.append(Image(str(fig3_path), width=480, height=190))
+        story.append(Paragraph("<b>Fig. 3.</b> 2D normalized routing activation heatmap across canonical Python keywords and the 16 micro-experts at Step 13,800. Low normalized entropy on tokens such as <code>lambda</code> (60.1% on Expert 3) and <code>import</code>/<code>class</code> (62.5% on Experts 5, 7, 10) demonstrates modular syntactic specialization.", caption_style))
+        story.append(Spacer(1, 3))
 
     # =========================================================================
     # Section VI: Discussion & Limitations

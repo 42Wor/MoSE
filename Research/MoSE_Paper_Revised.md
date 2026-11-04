@@ -86,6 +86,11 @@ where $W_{i,1} \in \mathbb{R}^{128 \times 192}$ and $W_{i,2} \in \mathbb{R}^{192
 The total parameter count is 5,938,816. With Top-2 micro-expert routing plus the persistent shared expert, active parameters per forward pass total 3,168,384, yielding an active compute sparsity ratio of:
 $$\text{Sparsity} = 1 - \frac{3,168,384}{5,938,816} = 46.65\%$$
 
+As illustrated in Fig. 1, the persistent shared expert acts in parallel with the routed micro-expert pathways to provide a shared semantic anchor across all tokens.
+
+![Fig. 1. Architectural diagram of a single MoSE block](file:///c:/Users/M/Desktop/MoSE/paper_figures/fig1_architecture.png)
+*Fig. 1. Architectural diagram of a single MoSE block. An input token representation $x_t$ is processed concurrently by the unrouted persistent shared expert ($d_{\text{shared}}=128$) and a learned gating network selecting the Top-2 of 16 micro-experts ($d_{\text{expert}}=128$).*
+
 ### B. Top-2 Gating and Dispatch
 Given token representation $x_t^{(l)}$ at layer $l$, the gating network computes routing logits over the 16 micro-experts:
 $$z_t^{(l)} = W_g^{(l)} x_t^{(l)}, \quad W_g^{(l)} \in \mathbb{R}^{16 \times 192} \tag{2}$$
@@ -144,6 +149,11 @@ MoSE was evaluated across edge workstation and datacenter cloud hardware:
 ### A. Quantitative Convergence
 The training trajectory was initialized from an unconditioned baseline loss of 9.2278, closely matching the theoretical uniform distribution over vocabulary $\ln(10,000) \approx 9.2103$. Using the AdamW optimizer ($\beta_1 = 0.9, \beta_2 = 0.95$) with a cosine learning rate schedule and linear warmup to $5.0 \times 10^{-4}$, optimization converged across 15,000 steps on 245.76M tokens.
 
+The convergence dynamics in Fig. 2(a) show a rapid perplexity reduction during linear warmup, while Fig. 2(b) confirms that the router auxiliary loss remains stable across the entire 245.8M-token training run.
+
+![Fig. 2. Training Convergence & Loss Trajectory](file:///c:/Users/M/Desktop/MoSE/paper_figures/fig2_convergence.png)
+*Fig. 2. Training and validation trajectory over 15,000 optimization steps on an NVIDIA L4 GPU. (a) Train and validation task loss with corresponding validation perplexity descent from 9,934 to 35.78; (b) Switch-style auxiliary load-balancing loss strictly bounded between 1.01 and 1.09, demonstrating stable routing without expert starvation.*
+
 #### TABLE III: COMPLETE QUANTITATIVE CONVERGENCE PROFILE
 | Step | Learning Rate | Train Task Loss | Aux Loss | Validation Task Loss | Validation Perplexity |
 | :---: | :---: | :---: | :---: | :---: | :---: |
@@ -200,6 +210,11 @@ Low normalized entropy indicates concentrated specialization, while high entropy
 | `assert` | Distributed (`*`) | Invariant assertion checking | 75.0% (Balanced Distribution) |
 
 *Glyph Legend: `.` = Inactive | `*` = Low activation | `#` = Medium activation | `###` = Dominant activation.*
+
+The activation heatmap in Fig. 3 visually validates token-conditioned routing diversity: functional keywords concentrate on discrete micro-experts, while control-flow exits (`return`, `try`) utilize distributed generalist pathways.
+
+![Fig. 3. Micro-Expert Routing Heatmap](file:///c:/Users/M/Desktop/MoSE/paper_figures/fig3_routing_heatmap.png)
+*Fig. 3. 2D normalized routing activation heatmap across canonical Python keywords and the 16 micro-experts at Step 13,800. Low normalized entropy on tokens such as `lambda` (60.1% on Expert 3) and `import`/`class` (62.5% on Experts 5, 7, 10) demonstrates modular syntactic specialization.*
 
 The empirical routing matrix reveals clear modularity:
 1. **Pivotal Token Concentration:** `lambda` converges with extreme concentration to **Expert 3** (60.1% entropy), confirming that micro-experts are capable of isolating fine-grained syntax.
