@@ -17,6 +17,7 @@ from reportlab.platypus import (
     HRFlowable,
     Image,
     Paragraph,
+    PageBreak,
     SimpleDocTemplate,
     Spacer,
     Table,
@@ -298,8 +299,11 @@ def build_pdf(output_pdf_path: Path):
     story.append(HRFlowable(width="100%", thickness=0.6, color=colors.HexColor("#777777"), spaceBefore=4, spaceAfter=10))
 
     # =========================================================================
-    # Section I: Introduction
+    # Section I: Introduction — deliberately begin on page 2.
+    # This keeps the title/abstract page uncluttered and gives the introduction
+    # a clean, predictable opening page in the manuscript.
     # =========================================================================
+    story.append(PageBreak())
     story.append(Paragraph("I. INTRODUCTION", h1_style))
     story.append(Paragraph(
         "Large language models derive expressive capacity from parameterized depth, wide hidden representations, and massive pretraining corpora. "
