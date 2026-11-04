@@ -1,0 +1,16 @@
+{
+  "vocab_size": 10000,
+  "train_tokens": 28177334,
+  "val_tokens": 1584516,
+  "total_tokens": 29761850,
+  "dtype": "uint16",
+  "special_tokens": {
+    "<PAD>": 0,
+    "<EOS>": 1,
+    "<PRE>": 2,
+    "<SUF>": 3,
+    "<MID>": 4
+  },
+  "train_bin_bytes": 56354668,
+  "val_bin_bytes": 3169032
+}

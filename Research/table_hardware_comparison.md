@@ -1,13 +1,9 @@
-### Table VI: Dual-Hardware Deployment Profile (Quadro T1000 vs. NVIDIA L4)
+### Table I-B: Hardware Execution Profile (Local vs. Cloud)
 
-| Metric / Resource | NVIDIA Quadro T1000 (Mobile Edge) | NVIDIA L4 (Cloud Accelerator) |
-| :--- | :---: | :---: |
-| **Architecture** | Turing (TU117) | Ada Lovelace (AD104) |
-| **Nominal VRAM** | 4.00 GB GDDR6 | 24.00 GB GDDR6 |
-| **Peak Training VRAM** | 860 MB (21.5% capacity) | 1,420 MB (5.9% capacity) |
-| **Precision** | FP16 AMP (`torch.amp`) | FP16 AMP (`torch.amp`) |
-| **Micro-Batch $\times$ Accumulation** | $16 \times 2$ (8,192 tok/step) | $32 \times 2$ (16,384 tok/step) |
-| **Step Latency** | 38.2 ms | 7.2 ms |
-| **Throughput** | 5,420 tokens/s | 30,550 tokens/s (5.6x) |
-| **Training Horizon** | Steps 0 to 3,600 | Steps 3,600 to 15,000 |
-| **Achieved Perplexity** | 75.11 (Step 3,600) | 23.62 (Step 15,000) |
+| Metric | Local Workstation | Google Colab Pro | Speedup / Impact |
+| :--- | :---: | :---: | :---: |
+| **Hardware** | NVIDIA Quadro T1000 Laptop | NVIDIA L4 Tensor Core GPU | Modern Ada Architecture |
+| **Allocated VRAM** | 860 MB / 4.00 GB (21.5%) | 1,597 MB / 22.03 GB (7.2%) | Ample memory safety |
+| **Throughput** | 5,200 – 5,600 tok/s | **29,500 – 30,100 tok/s** | **5.5× Throughput** |
+| **Total Tokens Trained** | ~17.5M tokens (3,400 steps) | **245.76M tokens (15,000 steps)** | **14× Dataset Exposure** |
+| **Best Perplexity** | 77.38 | **35.78** | **53.8% Perplexity Reduction** |

@@ -2,21 +2,19 @@
 \begin{table}[t]
 \centering
 \small
-\caption{Dual-Hardware Deployment and Training Profile: Mobile Edge vs. Cloud Accelerator.}
+\caption{Dual-Hardware Deployment and Training Profile: Local Mobile Edge vs. Cloud Accelerator.}
 \label{tab:hardware_comparison}
-\begin{tabular}{@{}lcc@{}}
+\begin{tabular}{@{}lccc@{}}
 \toprule
-\textbf{Metric / Resource} & \textbf{NVIDIA Quadro T1000 (Mobile Edge)} & \textbf{NVIDIA L4 (Cloud Accelerator)} \\
+\textbf{Metric} & \textbf{Local Workstation (Quadro T1000)} & \textbf{Google Colab Pro (NVIDIA L4)} & \textbf{Speedup / Impact} \\
 \midrule
-Architecture & Turing (TU117) & Ada Lovelace (AD104) \\
-Nominal VRAM & 4.00 GB GDDR6 & 24.00 GB GDDR6 \\
-Peak Training VRAM & 860 MB (21.5\% capacity) & 1,420 MB (5.9\% capacity) \\
-Precision & FP16 AMP (\texttt{torch.amp}) & FP16 AMP (\texttt{torch.amp}) \\
-Batch Size $\times$ Accumulation & $16 \times 2 = 32$ seqs (8,192 tok/step) & $32 \times 2 = 64$ seqs (16,384 tok/step) \\
-Step Latency & $38.2 \pm 1.4$ ms & $7.2 \pm 0.3$ ms \\
-Throughput & 5,420 tokens/s & 30,550 tokens/s ($5.6\times$) \\
-Training Milestone & Steps 0--3,600 & Steps 3,600--15,000 \\
-Final Perplexity & 75.11 (Step 3,600) & 23.62 (Step 15,000) \\
+Architecture & Turing (TU117) & Ada Lovelace (AD104) & Modern Ada Architecture \\
+Allocated VRAM & 860 MB / 4.00 GB (21.5\%) & 1,597 MB / 22.03 GB (7.2\%) & Ample memory safety \\
+Precision & FP16 AMP (\texttt{torch.amp}) & FP16 AMP (\texttt{torch.amp}) & Stable gradient scaling \\
+Effective Batch Size & $16 \times 2 = 32$ seqs & $32 \times 2 = 64$ seqs & $2\times$ batch volume \\
+Throughput & 5,200--5,600 tok/s & \textbf{29,500--30,100 tok/s} & \textbf{5.5$\times$ Throughput} \\
+Total Tokens Trained & $\sim$17.5M tokens (3,400 steps) & \textbf{245.76M tokens (15,000 steps)} & \textbf{14$\times$ Dataset Exposure} \\
+Best Perplexity & 77.38 (Step 3,400) & \textbf{35.78 (Step 13,800)} & \textbf{53.8\% Perplexity Reduction} \\
 \bottomrule
 \end{tabular}
 \end{table}

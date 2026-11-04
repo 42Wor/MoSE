@@ -142,7 +142,7 @@ def test_expert_utilization(
         export_routing: Optional file path (e.g. 'routing_matrix.json') to save routing matrix
     """
     if keywords is None:
-        keywords = ["def", "for", "return", "class", "import", "try", "async", "yield"]
+        keywords = ["lambda", "import", "class", "for", "def", "return", "try", "assert"]
 
     print("=" * 65)
     print("TEST 2: Micro-Expert Routing Heatmap Across Python Keywords")
