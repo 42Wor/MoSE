@@ -9,6 +9,7 @@ Performs two core benchmark evaluations:
 """
 
 import argparse
+import json
 import sys
 from pathlib import Path
 from typing import Dict, List, Optional, Tuple
@@ -129,19 +130,30 @@ def test_expert_utilization(
     tokenizer: Tokenizer,
     config: Config,
     keywords: Optional[List[str]] = None,
+    export_routing: Optional[str] = None,
 ):
-    """Measures micro-expert activation across syntactic Python keywords."""
+    """Measures micro-expert activation across syntactic Python keywords.
+    
+    Args:
+        model: Loaded MoSE model
+        tokenizer: Tokenizer instance
+        config: Model configuration
+        keywords: List of Python keywords to probe
+        export_routing: Optional file path (e.g. 'routing_matrix.json') to save routing matrix
+    """
     if keywords is None:
-        keywords = ["def", "import", "for", "class", "return", "try", "lambda", "assert"]
+        keywords = ["def", "for", "return", "class", "import", "try", "async", "yield"]
 
     print("=" * 65)
     print("TEST 2: Micro-Expert Routing Heatmap Across Python Keywords")
     print(f"Layers: {config.n_layers} | Experts per Layer: {config.num_experts} (Top-{config.top_k} routing)")
+    print(f"Probing Keywords: {', '.join(keywords)}")
     print("=" * 65)
 
     num_experts = config.num_experts
     # Matrix: [len(keywords), num_experts]
     activation_counts = np.zeros((len(keywords), num_experts), dtype=np.int32)
+    soft_gate_sums = np.zeros((len(keywords), num_experts), dtype=np.float32)
 
     with torch.no_grad():
         for k_idx, kw in enumerate(keywords):
@@ -151,15 +163,22 @@ def test_expert_utilization(
                 encoded = tokenizer.encode(kw)
 
             input_ids = torch.tensor([encoded.ids], dtype=torch.long, device=config.device)
-            outputs = model(input_ids)
-            routing_layers = outputs["routing_indices"]  # List of [N_tokens, top_k]
+            inspection = model.inspect_forward(input_ids, tokenizer=tokenizer)
+            
+            # Aggregate across layers
+            for l_idx in range(config.n_layers):
+                l_data = inspection["layer_routing"][l_idx]
+                indices = l_data["indices"]       # [T, top_k]
+                gate_probs = l_data["gate_probs"] # [T, num_experts]
 
-            # Aggregate expert selections across all layers for these keyword tokens
-            for layer_routing in routing_layers:
-                # layer_routing shape: [N_tokens, top_k]
-                indices = layer_routing.cpu().numpy().flatten()
-                for exp_id in indices:
+                for exp_id in indices.flatten():
                     activation_counts[k_idx, exp_id] += 1
+                
+                soft_gate_sums[k_idx] += gate_probs.sum(axis=0)
+
+    # Average soft gate distribution across (T * n_layers)
+    total_token_layer_evals = max(1, config.n_layers)
+    soft_gate_avg = soft_gate_sums / total_token_layer_evals
 
     # Print ASCII Heatmap
     header = f"{'Keyword':<10} | " + " ".join([f"E{e:<2}" for e in range(num_experts)])
@@ -191,12 +210,43 @@ def test_expert_utilization(
     entropy = -np.sum(probs * np.log(probs + 1e-12), axis=1)
     max_entropy = np.log(num_experts)
 
+    normalized_entropy_dict = {}
     print("\nExpert Specialization Diversity (Normalized Entropy):")
     for k_idx, kw in enumerate(keywords):
-        norm_entropy = (entropy[k_idx] / max_entropy) * 100
+        norm_entropy = float((entropy[k_idx] / max_entropy) * 100)
+        normalized_entropy_dict[kw] = round(norm_entropy, 2)
         specialized = "High Specialization" if norm_entropy < 70 else "Distributed Load"
         print(f"  {kw:<10} : {norm_entropy:5.1f}% entropy ({specialized})")
     print("=" * 65 + "\n")
+
+    # Export routing data if requested
+    if export_routing is not None:
+        export_path = Path(export_routing)
+        export_path.parent.mkdir(parents=True, exist_ok=True)
+
+        # Normalize activation frequency matrix per keyword
+        freq_norm = (activation_counts / row_sums).tolist()
+        soft_gate_norm = (soft_gate_avg / soft_gate_avg.sum(axis=1, keepdims=True)).tolist()
+
+        payload = {
+            "keywords": keywords,
+            "num_experts": num_experts,
+            "top_k": config.top_k,
+            "n_layers": config.n_layers,
+            "normalized_frequency_matrix": freq_norm,
+            "activation_counts": {
+                kw: activation_counts[i].tolist() for i, kw in enumerate(keywords)
+            },
+            "soft_gate_distribution": {
+                kw: soft_gate_norm[i] for i, kw in enumerate(keywords)
+            },
+            "normalized_entropy": normalized_entropy_dict,
+        }
+
+        with open(export_path, "w", encoding="utf-8") as f:
+            json.dump(payload, f, indent=2)
+
+        print(f"✓ Exported complete routing matrix and soft gate distribution to: {export_path.resolve()}\n")
 
 
 if __name__ == "__main__":
@@ -205,6 +255,7 @@ if __name__ == "__main__":
     parser.add_argument("--tokenizer", type=str, default="data/binary/tokenizer.json", help="Path to tokenizer")
     parser.add_argument("--device", type=str, default=None, help="Device to run evaluation on")
     parser.add_argument("--prompt", type=str, default=None, help="Custom FIM prompt")
+    parser.add_argument("--export_routing", type=str, default=None, help="File path to export routing matrix JSON")
 
     args = parser.parse_args()
     model, tokenizer, config = load_model_and_tokenizer(
@@ -214,4 +265,4 @@ if __name__ == "__main__":
     )
 
     test_code_infilling(model, tokenizer, config, prompt=args.prompt)
-    test_expert_utilization(model, tokenizer, config)
+    test_expert_utilization(model, tokenizer, config, export_routing=args.export_routing)
