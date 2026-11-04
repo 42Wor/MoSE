@@ -7,6 +7,8 @@ running headers, two-pass total page numbering, and high-resolution figures.
 """
 
 from pathlib import Path
+import argparse
+import logging
 
 from reportlab.lib import colors
 from reportlab.lib.enums import TA_CENTER, TA_JUSTIFY, TA_LEFT
@@ -75,10 +77,13 @@ class NumberedCanvas(canvas.Canvas):
         self.restoreState()
 
 
-def build_pdf(output_pdf_path: Path):
-    """Generates publication-quality PDF."""
+def build_pdf(output_pdf_path: Path, project_root: Path | None = None):
+    """Build the monochrome MoSE manuscript PDF with validated output paths."""
     output_pdf_path = Path(output_pdf_path).expanduser().resolve()
     output_pdf_path.parent.mkdir(parents=True, exist_ok=True)
+    project_root = Path(project_root).expanduser().resolve() if project_root else Path(__file__).resolve().parent
+    if project_root.name.lower() == "tools":
+        project_root = project_root.parent
 
     # Margins: 42pt left/right, 42pt top/bottom
     doc = SimpleDocTemplate(
@@ -635,10 +640,28 @@ def build_pdf(output_pdf_path: Path):
 
     # Build document
     doc.build(story, canvasmaker=NumberedCanvas)
-    print(f"[OK] Successfully built professional PDF: {output_pdf_path.resolve()}")
+    if not output_pdf_path.exists() or output_pdf_path.stat().st_size < 2_000:
+        raise RuntimeError(f"PDF build did not produce a valid output: {output_pdf_path}")
+    print(f"[OK] PDF generated: {output_pdf_path}")
+    print(f"[INFO] File size: {output_pdf_path.stat().st_size:,} bytes")
 
 
 if __name__ == "__main__":
-    project_root = (Path(__file__).resolve().parent.parent if Path(__file__).resolve().parent.name.lower() == "tools" else Path(__file__).resolve().parent)
-    out_file = project_root / "Research" / "MoSE_Research_Paper_Professional.pdf"
-    build_pdf(out_file)
+    parser = argparse.ArgumentParser(
+        description="Generate the monochrome MoSE research-paper PDF."
+    )
+    parser.add_argument(
+        "--output", type=Path,
+        help="Output PDF path (default: <project-root>/Research/MoSE_Research_Paper_Professional.pdf).",
+    )
+    parser.add_argument(
+        "--project-root", type=Path,
+        help="Project root containing the optional paper_figures directory.",
+    )
+    args = parser.parse_args()
+
+    project_root = args.project_root or Path(__file__).resolve().parent
+    if project_root.name.lower() == "tools":
+        project_root = project_root.parent
+    output_file = args.output or project_root / "Research" / "MoSE_Research_Paper_Professional.pdf"
+    build_pdf(output_file, project_root=project_root)
