@@ -6,20 +6,16 @@ featuring professional typography, mathematical equations, formatted tables,
 running headers, two-pass total page numbering, and high-resolution figures.
 """
 
-import os
-import sys
 from pathlib import Path
 
 from reportlab.lib import colors
-from reportlab.lib.enums import TA_CENTER, TA_JUSTIFY, TA_LEFT, TA_RIGHT
+from reportlab.lib.enums import TA_CENTER, TA_JUSTIFY, TA_LEFT
 from reportlab.lib.pagesizes import letter
 from reportlab.lib.styles import ParagraphStyle, getSampleStyleSheet
 from reportlab.pdfgen import canvas
 from reportlab.platypus import (
     HRFlowable,
     Image,
-    KeepTogether,
-    PageBreak,
     Paragraph,
     SimpleDocTemplate,
     Spacer,
@@ -41,6 +37,9 @@ class NumberedCanvas(canvas.Canvas):
 
     def save(self):
         num_pages = len(self._saved_page_states)
+        if num_pages == 0:
+            super().save()
+            return
         for state in self._saved_page_states:
             self.__dict__.update(state)
             self.draw_page_decorations(num_pages)
@@ -49,32 +48,35 @@ class NumberedCanvas(canvas.Canvas):
 
     def draw_page_decorations(self, page_count):
         self.saveState()
-        self.setFont("Times-Roman", 8.5)
-        self.setFillColor(colors.HexColor("#424242"))
+        page_width, page_height = self._pagesize
+        self.setFont("Times-Roman", 8)
+        self.setFillColor(colors.black)
 
-        # Running header (Pages 2+)
+        # Running header (Pages 2+); keep it above the document's text area.
         if self._pageNumber > 1:
-            header_text = "WAHEED: MOSE: EXPLORING EXTREME EXPERT GRANULARITY IN SPARSE TRANSFORMERS"
-            self.drawString(50, 11 * 72 - 36, header_text)
-            self.setStrokeColor(colors.HexColor("#bdbdbd"))
-            self.setLineWidth(0.5)
-            self.line(50, 11 * 72 - 40, 8.5 * 72 - 50, 11 * 72 - 40)
+            header_text = "WAHEED: MoSE: EXPERT GRANULARITY IN SPARSE TRANSFORMERS"
+            self.drawString(42, page_height - 24, header_text)
+            self.setStrokeColor(colors.HexColor("#777777"))
+            self.setLineWidth(0.4)
+            self.line(42, page_height - 29, page_width - 42, page_height - 29)
 
         # Running footer (All pages)
-        self.setStrokeColor(colors.HexColor("#e0e0e0"))
-        self.setLineWidth(0.5)
-        self.line(50, 42, 8.5 * 72 - 50, 42)
+        self.setStrokeColor(colors.HexColor("#777777"))
+        self.setLineWidth(0.4)
+        self.line(42, 38, page_width - 42, 38)
 
-        footer_left = "IEEE Transactions on Machine Learning Systems (Preprint Draft)"
-        self.drawString(50, 30, footer_left)
+        footer_left = "MoSE Research Paper — Preprint Draft"
+        self.setFillColor(colors.black)
+        self.drawString(42, 25, footer_left)
 
         page_str = f"Page {self._pageNumber} of {page_count}"
-        self.drawRightString(8.5 * 72 - 50, 30, page_str)
+        self.drawRightString(page_width - 42, 25, page_str)
         self.restoreState()
 
 
 def build_pdf(output_pdf_path: Path):
     """Generates publication-quality PDF."""
+    output_pdf_path = Path(output_pdf_path).expanduser().resolve()
     output_pdf_path.parent.mkdir(parents=True, exist_ok=True)
 
     # Margins: 42pt left/right, 42pt top/bottom
@@ -83,8 +85,11 @@ def build_pdf(output_pdf_path: Path):
         pagesize=letter,
         leftMargin=42,
         rightMargin=42,
-        topMargin=42,
-        bottomMargin=42,
+        topMargin=54,
+        bottomMargin=54,
+        title="MoSE: Lower Bounds of Expert Granularity in Sparse Transformers on Resource-Constrained Hardware",
+        author="Maaz Waheed",
+        subject="Research manuscript on sparse Transformer expert granularity",
     )
 
     styles = getSampleStyleSheet()
@@ -97,7 +102,7 @@ def build_pdf(output_pdf_path: Path):
         fontSize=16.5,
         leading=20.5,
         alignment=TA_CENTER,
-        textColor=colors.HexColor("#111111"),
+        textColor=colors.HexColor("#000000"),
         spaceAfter=8,
     )
 
@@ -108,7 +113,7 @@ def build_pdf(output_pdf_path: Path):
         fontSize=10.0,
         leading=13.5,
         alignment=TA_CENTER,
-        textColor=colors.HexColor("#212121"),
+        textColor=colors.HexColor("#000000"),
     )
 
     email_style = ParagraphStyle(
@@ -118,7 +123,7 @@ def build_pdf(output_pdf_path: Path):
         fontSize=8.5,
         leading=11.5,
         alignment=TA_CENTER,
-        textColor=colors.HexColor("#0d47a1"),
+        textColor=colors.HexColor("#444444"),
         spaceAfter=10,
     )
 
@@ -131,7 +136,7 @@ def build_pdf(output_pdf_path: Path):
         alignment=TA_JUSTIFY,
         leftIndent=20,
         rightIndent=20,
-        textColor=colors.HexColor("#1a1a1a"),
+        textColor=colors.HexColor("#000000"),
     )
 
     h1_style = ParagraphStyle(
@@ -154,7 +159,7 @@ def build_pdf(output_pdf_path: Path):
         fontSize=9.5,
         leading=13.0,
         alignment=TA_LEFT,
-        textColor=colors.HexColor("#1a237e"),
+        textColor=colors.HexColor("#000000"),
         spaceBefore=8,
         spaceAfter=3,
         keepWithNext=True,
@@ -167,7 +172,7 @@ def build_pdf(output_pdf_path: Path):
         fontSize=9.0,
         leading=12.2,
         alignment=TA_JUSTIFY,
-        textColor=colors.HexColor("#212121"),
+        textColor=colors.HexColor("#000000"),
         spaceAfter=5,
     )
 
@@ -178,7 +183,7 @@ def build_pdf(output_pdf_path: Path):
         fontSize=9.0,
         leading=12.5,
         alignment=TA_CENTER,
-        textColor=colors.HexColor("#111111"),
+        textColor=colors.HexColor("#000000"),
         spaceBefore=3,
         spaceAfter=5,
     )
@@ -190,7 +195,7 @@ def build_pdf(output_pdf_path: Path):
         fontSize=8.0,
         leading=10.5,
         alignment=TA_LEFT,
-        textColor=colors.HexColor("#263238"),
+        textColor=colors.HexColor("#000000"),
         leftIndent=12,
         spaceBefore=3,
         spaceAfter=5,
@@ -203,7 +208,7 @@ def build_pdf(output_pdf_path: Path):
         fontSize=8.2,
         leading=11.2,
         alignment=TA_CENTER,
-        textColor=colors.HexColor("#37474f"),
+        textColor=colors.HexColor("#000000"),
         spaceBefore=3,
         spaceAfter=8,
     )
@@ -225,7 +230,7 @@ def build_pdf(output_pdf_path: Path):
         fontSize=7.8,
         leading=9.8,
         alignment=TA_CENTER,
-        textColor=colors.HexColor("#212121"),
+        textColor=colors.HexColor("#000000"),
     )
 
     table_cell_left = ParagraphStyle(
@@ -235,7 +240,7 @@ def build_pdf(output_pdf_path: Path):
         fontSize=7.8,
         leading=9.8,
         alignment=TA_LEFT,
-        textColor=colors.HexColor("#212121"),
+        textColor=colors.HexColor("#000000"),
     )
 
     table_cell_bold = ParagraphStyle(
@@ -245,7 +250,7 @@ def build_pdf(output_pdf_path: Path):
         fontSize=7.8,
         leading=9.8,
         alignment=TA_CENTER,
-        textColor=colors.HexColor("#0d47a1"),
+        textColor=colors.HexColor("#444444"),
     )
 
     ref_style = ParagraphStyle(
@@ -257,7 +262,7 @@ def build_pdf(output_pdf_path: Path):
         alignment=TA_LEFT,
         leftIndent=16,
         firstLineIndent=-16,
-        textColor=colors.HexColor("#212121"),
+        textColor=colors.HexColor("#000000"),
         spaceAfter=2.5,
     )
 
@@ -290,7 +295,7 @@ def build_pdf(output_pdf_path: Path):
     )
     story.append(Paragraph(abstract_text, abstract_style))
     story.append(Spacer(1, 10))
-    story.append(HRFlowable(width="100%", thickness=0.6, color=colors.HexColor("#b0bec5"), spaceBefore=4, spaceAfter=10))
+    story.append(HRFlowable(width="100%", thickness=0.6, color=colors.HexColor("#777777"), spaceBefore=4, spaceAfter=10))
 
     # =========================================================================
     # Section I: Introduction
@@ -369,7 +374,8 @@ def build_pdf(output_pdf_path: Path):
         "As illustrated in Fig. 1, the persistent shared expert acts in parallel with the routed micro-expert pathways to provide a shared semantic anchor across all tokens.",
         body_style,
     ))
-    fig1_path = Path("paper_figures/fig1_architecture.png")
+    project_root = (Path(__file__).resolve().parent.parent if Path(__file__).resolve().parent.name.lower() == "tools" else Path(__file__).resolve().parent)
+    fig1_path = project_root / "paper_figures" / "fig1_architecture.png"
     if fig1_path.exists():
         story.append(Spacer(1, 2))
         story.append(Image(str(fig1_path), width=460, height=265))
@@ -420,10 +426,10 @@ def build_pdf(output_pdf_path: Path):
     ]
     t1 = Table(table1_data, colWidths=[180, 310])
     t1.setStyle(TableStyle([
-        ("BACKGROUND", (0, 0), (-1, 0), colors.HexColor("#1565c0")),
+        ("BACKGROUND", (0, 0), (-1, 0), colors.HexColor("#555555")),
         ("ALIGN", (0, 0), (-1, -1), "LEFT"),
-        ("GRID", (0, 0), (-1, -1), 0.5, colors.HexColor("#cfd8dc")),
-        ("ROWBACKGROUNDS", (0, 1), (-1, -1), [colors.HexColor("#ffffff"), colors.HexColor("#f8f9fa")]),
+        ("GRID", (0, 0), (-1, -1), 0.5, colors.HexColor("#888888")),
+        ("ROWBACKGROUNDS", (0, 1), (-1, -1), [colors.HexColor("#ffffff"), colors.HexColor("#eeeeee")]),
         ("TOPPADDING", (0, 0), (-1, -1), 2.5),
         ("BOTTOMPADDING", (0, 0), (-1, -1), 2.5),
     ]))
@@ -443,10 +449,10 @@ def build_pdf(output_pdf_path: Path):
     ]
     t2 = Table(table2_data, colWidths=[120, 130, 130, 110])
     t2.setStyle(TableStyle([
-        ("BACKGROUND", (0, 0), (-1, 0), colors.HexColor("#0d47a1")),
+        ("BACKGROUND", (0, 0), (-1, 0), colors.HexColor("#444444")),
         ("ALIGN", (0, 0), (-1, -1), "CENTER"),
-        ("GRID", (0, 0), (-1, -1), 0.5, colors.HexColor("#cfd8dc")),
-        ("ROWBACKGROUNDS", (0, 1), (-1, -1), [colors.HexColor("#ffffff"), colors.HexColor("#f8f9fa")]),
+        ("GRID", (0, 0), (-1, -1), 0.5, colors.HexColor("#888888")),
+        ("ROWBACKGROUNDS", (0, 1), (-1, -1), [colors.HexColor("#ffffff"), colors.HexColor("#eeeeee")]),
         ("TOPPADDING", (0, 0), (-1, -1), 2.2),
         ("BOTTOMPADDING", (0, 0), (-1, -1), 2.2),
     ]))
@@ -467,7 +473,7 @@ def build_pdf(output_pdf_path: Path):
     ))
 
     # Figure 2 placed directly above Table III per checklist
-    fig2_path = Path("paper_figures/fig2_convergence.png")
+    fig2_path = project_root / "paper_figures" / "fig2_convergence.png"
     if fig2_path.exists():
         story.append(Spacer(1, 2))
         story.append(Image(str(fig2_path), width=480, height=155))
@@ -494,11 +500,11 @@ def build_pdf(output_pdf_path: Path):
     ]
     t3 = Table(table3_data, colWidths=[80, 85, 80, 75, 85, 85])
     t3.setStyle(TableStyle([
-        ("BACKGROUND", (0, 0), (-1, 0), colors.HexColor("#2e7d32")),
+        ("BACKGROUND", (0, 0), (-1, 0), colors.HexColor("#555555")),
         ("ALIGN", (0, 0), (-1, -1), "CENTER"),
-        ("GRID", (0, 0), (-1, -1), 0.5, colors.HexColor("#cfd8dc")),
-        ("ROWBACKGROUNDS", (0, 1), (-1, -1), [colors.HexColor("#ffffff"), colors.HexColor("#f8f9fa")]),
-        ("BACKGROUND", (0, 13), (-1, 13), colors.HexColor("#e8f5e9")),
+        ("GRID", (0, 0), (-1, -1), 0.5, colors.HexColor("#888888")),
+        ("ROWBACKGROUNDS", (0, 1), (-1, -1), [colors.HexColor("#ffffff"), colors.HexColor("#eeeeee")]),
+        ("BACKGROUND", (0, 13), (-1, 13), colors.HexColor("#dddddd")),
         ("TOPPADDING", (0, 0), (-1, -1), 1.8),
         ("BOTTOMPADDING", (0, 0), (-1, -1), 1.8),
     ]))
@@ -519,10 +525,10 @@ def build_pdf(output_pdf_path: Path):
     ]
     t4 = Table(table4_data, colWidths=[65, 200, 225])
     t4.setStyle(TableStyle([
-        ("BACKGROUND", (0, 0), (-1, 0), colors.HexColor("#37474f")),
+        ("BACKGROUND", (0, 0), (-1, 0), colors.HexColor("#000000")),
         ("ALIGN", (0, 0), (-1, -1), "LEFT"),
-        ("GRID", (0, 0), (-1, -1), 0.5, colors.HexColor("#cfd8dc")),
-        ("ROWBACKGROUNDS", (0, 1), (-1, -1), [colors.HexColor("#ffffff"), colors.HexColor("#f8f9fa")]),
+        ("GRID", (0, 0), (-1, -1), 0.5, colors.HexColor("#888888")),
+        ("ROWBACKGROUNDS", (0, 1), (-1, -1), [colors.HexColor("#ffffff"), colors.HexColor("#eeeeee")]),
         ("TOPPADDING", (0, 0), (-1, -1), 2.0),
         ("BOTTOMPADDING", (0, 0), (-1, -1), 2.0),
     ]))
@@ -552,11 +558,11 @@ def build_pdf(output_pdf_path: Path):
     ]
     t5 = Table(table5_data, colWidths=[70, 120, 180, 120])
     t5.setStyle(TableStyle([
-        ("BACKGROUND", (0, 0), (-1, 0), colors.HexColor("#4a148c")),
+        ("BACKGROUND", (0, 0), (-1, 0), colors.HexColor("#555555")),
         ("ALIGN", (0, 0), (-1, -1), "LEFT"),
-        ("GRID", (0, 0), (-1, -1), 0.5, colors.HexColor("#cfd8dc")),
-        ("ROWBACKGROUNDS", (0, 1), (-1, -1), [colors.HexColor("#ffffff"), colors.HexColor("#f8f9fa")]),
-        ("BACKGROUND", (0, 1), (-1, 1), colors.HexColor("#f3e5f5")),
+        ("GRID", (0, 0), (-1, -1), 0.5, colors.HexColor("#888888")),
+        ("ROWBACKGROUNDS", (0, 1), (-1, -1), [colors.HexColor("#ffffff"), colors.HexColor("#eeeeee")]),
+        ("BACKGROUND", (0, 1), (-1, 1), colors.HexColor("#dddddd")),
         ("TOPPADDING", (0, 0), (-1, -1), 2.0),
         ("BOTTOMPADDING", (0, 0), (-1, -1), 2.0),
     ]))
@@ -565,7 +571,7 @@ def build_pdf(output_pdf_path: Path):
     story.append(Spacer(1, 5))
 
     # Insert Figure 3 directly following Table V per checklist
-    fig3_path = Path("paper_figures/fig3_routing_heatmap.png")
+    fig3_path = project_root / "paper_figures" / "fig3_routing_heatmap.png"
     if fig3_path.exists():
         story.append(Image(str(fig3_path), width=480, height=190))
         story.append(Paragraph("<b>Fig. 3.</b> 2D normalized routing activation heatmap across canonical Python keywords and the 16 micro-experts at Step 13,800. Low normalized entropy on tokens such as <code>lambda</code> (60.1% on Expert 3) and <code>import</code>/<code>class</code> (62.5% on Experts 5, 7, 10) demonstrates modular syntactic specialization.", caption_style))
@@ -629,5 +635,6 @@ def build_pdf(output_pdf_path: Path):
 
 
 if __name__ == "__main__":
-    out_file = Path("Research/MoSE_Research_Paper_Professional.pdf")
+    project_root = (Path(__file__).resolve().parent.parent if Path(__file__).resolve().parent.name.lower() == "tools" else Path(__file__).resolve().parent)
+    out_file = project_root / "Research" / "MoSE_Research_Paper_Professional.pdf"
     build_pdf(out_file)
